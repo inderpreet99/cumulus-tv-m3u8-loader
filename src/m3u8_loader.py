@@ -349,113 +349,120 @@ def logStart():
 # process
 #-------------------------------------------------------------------------------
 
-logStart()
+def lambda_handler(event, context):
 
-logging.info("================================================================================")
-logging.info("================================================================================")
-logging.info("start")
-logging.info("================================================================================")
-logging.info("================================================================================")
+  logStart()
 
-cumulustv = {"channels": [],
-             "timestamp": str(time.time())}
-startAt = 0  #first channel number - 1
+  logging.info("================================================================================")
+  logging.info("================================================================================")
+  logging.info("start")
+  logging.info("================================================================================")
+  logging.info("================================================================================")
 
-for provider, providerData in config.config["providers"].iteritems():
-  if providerData.get("active", False):
-    logging.info("Provider: " + provider + " ======================")
-    logging.info("url     : " + providerData["url"])
-    try:
-      m3uContent = loadm3u(providerData["url"])
-    except Exception as e:
-      logging.error("loading " + providerData["url"] + " - " + str(e))
-    else:
-      startAt = int(providerData.get("first-channel-number", startAt))
-      startAt += process(m3uContent, provider, cumulustv, startAt)
+  cumulustv = {"channels": [],
+               "timestamp": str(time.time())}
+  startAt = 0  #first channel number - 1
 
-      genres = possibleGenres(cumulustv)
-      if len(genres) > 0:
-        cumulustv.update({"possibleGenres": genres})
+  for provider, providerData in config.config["providers"].iteritems():
+    if providerData.get("active", False):
+      logging.info("Provider: " + provider + " ======================")
+      logging.info("url     : " + providerData["url"])
+      try:
+        m3uContent = loadm3u(providerData["url"])
+      except Exception as e:
+        logging.error("loading " + providerData["url"] + " - " + str(e))
+      else:
+        startAt = int(providerData.get("first-channel-number", startAt))
+        startAt += process(m3uContent, provider, cumulustv, startAt)
 
-      #pp.pprint(cumulustv)
+        genres = possibleGenres(cumulustv)
+        if len(genres) > 0:
+          cumulustv.update({"possibleGenres": genres})
 
-logging.info("END - Channels loaded: " + str(len(urlCollector)))
+        #pp.pprint(cumulustv)
 
-#write to file
-m3uFile = config.config["outputs"].get("m3u-file", None)
-if m3uFile:
-  if m3uFile.get("active", False):
-    try:
-      fileName = m3uFile["file-name"]
-      logging.info("Write to file:" + fileName)
-      with open(fileName, "w") as fd:
-        write2File(fd, cumulustv)
-    except Exception as e:
-      logging.error("can't open/write file: " + str(e))
-      sys.exit(-1)
+  logging.info("END - Channels loaded: " + str(len(urlCollector)))
 
-#send to DRIVE
-driveConfig = config.config["outputs"].get("google-drive", None)
-if driveConfig:
-  if driveConfig.get("active", False):
-    gauth = GoogleAuth()
-    gauth.CommandLineAuth()
-    #gauth.LocalWebserverAuth() # Creates local webserver and auto handles authentication
-    # authCode = driveConfig.get("auth-code", "")
-    # if authCode is None or authCode == "":
-    #   url = gauth.GetAuthUrl()
-    #   print "This application have not access to your Google Drive. Yo need an access code from:"
-    #   print url
-    #   print "then copy and paste the code in \"auth-code\" in the outputs/google-drive section in your config.py file"
-    #   sys.exit(0)
+  #write to file
+  m3uFile = config.config["outputs"].get("m3u-file", None)
+  if m3uFile:
+    if m3uFile.get("active", False):
+      try:
+        fileName = m3uFile["file-name"]
+        logging.info("Write to file:" + fileName)
+        with open(fileName, "w") as fd:
+          write2File(fd, cumulustv)
+      except Exception as e:
+        logging.error("can't open/write file: " + str(e))
+        sys.exit(-1)
 
-    try:
-      #gauth.Auth(authCode)
-      drive = GoogleDrive(gauth)
-    except Exception as e:
-      print "Exception: " + str(e)
-      print "If you have problems with the application permissions try to use this url:"
-      print gauth.GetAuthUrl()
-      print "then copy and paste the code in the outputs/google-drive/auth-code section in your config.py file"
-      sys.exit(-1)
+  #send to DRIVE
+  driveConfig = config.config["outputs"].get("google-drive", None)
+  if driveConfig:
+    if driveConfig.get("active", False):
+      gauth = GoogleAuth()
+      gauth.CommandLineAuth()
+      #gauth.LocalWebserverAuth() # Creates local webserver and auto handles authentication
+      # authCode = driveConfig.get("auth-code", "")
+      # if authCode is None or authCode == "":
+      #   url = gauth.GetAuthUrl()
+      #   print "This application have not access to your Google Drive. Yo need an access code from:"
+      #   print url
+      #   print "then copy and paste the code in \"auth-code\" in the outputs/google-drive section in your config.py file"
+      #   sys.exit(0)
 
-    fileName = driveConfig.get("file-name", "cumulustv.json")
+      try:
+        #gauth.Auth(authCode)
+        drive = GoogleDrive(gauth)
+      except Exception as e:
+        print "Exception: " + str(e)
+        print "If you have problems with the application permissions try to use this url:"
+        print gauth.GetAuthUrl()
+        print "then copy and paste the code in the outputs/google-drive/auth-code section in your config.py file"
+        sys.exit(-1)
 
-    gContent = ''
-    gMimeType = ''
-    if fileName.endswith('json'):
-      gContent = json.dumps(cumulustv, ensure_ascii=True)
-      gMimeType = 'application/json'
-    else:
-      gContent = dictToM3U(cumulustv)
-      gMimeType = 'application/x-mpegURL'
+      fileName = driveConfig.get("file-name", "cumulustv.json")
 
-    try:
-      cumulusTVFile = drive.CreateFile({'title': fileName, 'mimeType': gMimeType})  # Create GoogleDriveFile instance with title 'Hello.txt'
-      cumulusTVFile.SetContentString(gContent) # Set content of the file from given string
-      cumulusTVFile.Upload()
-      print "Uploaded to drive: " + fileName
-    except Exception as e:
-      err="Google Drive upload exception: " + str(e)
-      print err
-      logging.error(err)
+      gContent = ''
+      gMimeType = ''
+      if fileName.endswith('json'):
+        gContent = json.dumps(cumulustv, ensure_ascii=True)
+        gMimeType = 'application/json'
+      else:
+        gContent = dictToM3U(cumulustv)
+        gMimeType = 'application/x-mpegURL'
 
-#send json to disk
-jsonOutput = config.config["outputs"].get("json-file", None)
-if jsonOutput:
-  if jsonOutput.get("active", False):
-    fileName = jsonOutput.get("file-name", "cumulustv.json")
-    logging.info("Cumulus tv json - write to file:" + fileName)
-    jsonContent = json.dumps(cumulustv, ensure_ascii=False)
-    try:
-      logging.info("Write to file:" + fileName)
-      with open(fileName, "w") as fd:
-        fd.write(jsonContent)
-    except Exception as e:
-      logging.error("ERROR saving json file: " + str(e))
-      sys.exit(-1)
+      try:
+        cumulusTVFile = drive.CreateFile({'title': fileName, 'mimeType': gMimeType})  # Create GoogleDriveFile instance with title 'Hello.txt'
+        cumulusTVFile.SetContentString(gContent) # Set content of the file from given string
+        cumulusTVFile.Upload()
+        print "Uploaded to drive: " + fileName
+      except Exception as e:
+        err="Google Drive upload exception: " + str(e)
+        print err
+        logging.error(err)
 
-if not config.config["outputs"]:
-  print dictToM3U(cumulustv)
+  #send json to disk
+  jsonOutput = config.config["outputs"].get("json-file", None)
+  if jsonOutput:
+    if jsonOutput.get("active", False):
+      fileName = jsonOutput.get("file-name", "cumulustv.json")
+      logging.info("Cumulus tv json - write to file:" + fileName)
+      jsonContent = json.dumps(cumulustv, ensure_ascii=False)
+      try:
+        logging.info("Write to file:" + fileName)
+        with open(fileName, "w") as fd:
+          fd.write(jsonContent)
+      except Exception as e:
+        logging.error("ERROR saving json file: " + str(e))
+        sys.exit(-1)
 
-logging.info("END -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
+  if not config.config["outputs"]:
+    print dictToM3U(cumulustv)
+
+  logging.info("END -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
+
+if __name__ == "__main__":
+    event = []
+    context = []
+    lambda_handler(event, context)
