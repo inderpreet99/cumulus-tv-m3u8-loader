@@ -36,7 +36,8 @@ pp = pprint.PrettyPrinter(indent=2)
 
 __author__ = 'curif'
 
-m3u_regex = '(.+?),(.+)\s*(.+)\s*'
+m3u_regex = '(.+?)\s*\n\s*(.+)\s*\n'
+ext_name_regex = '(.*),\s*(.*)'
 name_regex = '.*?tvg-name=[\'"](.*?)[\'"]'
 group_regex = '.*?group-title=[\'"](.*?)[\'"]'
 logo_regex = '.*?tvg-logo=[\'"](.*?)[\'"]'
@@ -45,6 +46,7 @@ country_regex = '.*?tvg-country=[\'"](.*?)[\'"]'
 id_regex = '.*?tvg-id=[\'"](.*?)[\'"]'
 
 m3uRe = re.compile(m3u_regex)
+extNameRe = re.compile(ext_name_regex)
 nameRe = re.compile(name_regex)
 logoRe = re.compile(logo_regex)
 langRe = re.compile(lang_regex)
@@ -105,11 +107,11 @@ def loadm3u(url):
   return data
 
 
-def regParse(parser, data):
+def regParse(parser, data, group=1):
   foundString = parser.search(data)
   if foundString:
     #print "regParse result", x.group(1)
-    return foundString.group(1).strip()
+    return foundString.group(group).strip()
   return None
 
 
@@ -214,6 +216,7 @@ def verifyFilters(filters, name, country, group, lang):
 
 def process(m3u, provider, cumulustv, contStart=None):
 
+  m3u = m3u[m3u.find('#EXTINF'):]
   match = m3uRe.findall(m3u)
   urlEndChar = config.config["providers"][provider].get("m3u-url-endchar", "")
   filters = config.config["providers"][provider].get("filters", None)
@@ -222,16 +225,18 @@ def process(m3u, provider, cumulustv, contStart=None):
   if contStart is None:
     contStart=0
 
-  for extInfData, name, url in match:
+  for extInfData, url in match:
+    name = regParse(extNameRe, extInfData, 2)
+    extInf = regParse(extNameRe, extInfData, 1)
 
-    id = regParse(idRe, extInfData)
-    logo = regParse(logoRe, extInfData)
-    country = regParse(countryRe, extInfData)
-    group = regParse(groupRe, extInfData)
-    lang = regParse(langRe, extInfData)
+    id = regParse(idRe, extInf)
+    logo = regParse(logoRe, extInf)
+    country = regParse(countryRe, extInf)
+    group = regParse(groupRe, extInf)
+    lang = regParse(langRe, extInf)
 
     if name is None or name == "":
-      name = regParse(nameRe, extInfData)
+      name = regParse(nameRe, extInf)
 
     if verifyFilters(filters, name, country, group, lang):
 
