@@ -455,4 +455,7 @@ if jsonOutput:
       logging.error("ERROR saving json file: " + str(e))
       sys.exit(-1)
 
+if not config.config["outputs"]:
+  print dictToM3U(cumulustv)
+
 logging.info("END -*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*")
