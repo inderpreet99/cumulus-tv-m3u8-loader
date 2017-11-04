@@ -17,7 +17,7 @@ IPTV m3u list parser, conversor and uploader for Cumulus-tv and Kodi IPTV simple
 
     git clone https://github.com/curif/cumulus-tv-m3u8-loader.git
     cd cumulus-tv-m3u8-loader
-    sudo pip install -r requires.txt 
+    sudo pip install -r requires.txt
     cd src
     cp configToCopy.py config.py
 
@@ -27,7 +27,7 @@ Modify src/config.py. Change the configuration to point to your m3u8 online prov
 Define the outputs as needed.
 
 ## run
-    
+
     cd cumulus-tv-m3u8-loader/src
     python ./m3u8_loader.py
 
@@ -155,7 +155,7 @@ The output can be a m3u8 file, a cumulus tv json file and a a cumulus tv json fi
     }
   }
   ```
-  
+
 Please configure the `outputs` section as needed. The names are self explanatory.
 
 ### logging
