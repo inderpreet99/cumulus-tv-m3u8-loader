@@ -420,11 +420,19 @@ if driveConfig:
       sys.exit(-1)
 
     fileName = driveConfig.get("file-name", "cumulustv.json")
-    jsonContent = json.dumps(cumulustv, ensure_ascii=True)
+
+    gContent = ''
+    gMimeType = ''
+    if fileName.endswith('json'):
+      gContent = json.dumps(cumulustv, ensure_ascii=True)
+      gMimeType = 'application/json'
+    else:
+      gContent = dictToM3U(cumulustv)
+      gMimeType = 'application/x-mpegURL'
 
     try:
-      cumulusTVFile = drive.CreateFile({'title': fileName, 'mimeType': 'application/json'})  # Create GoogleDriveFile instance with title 'Hello.txt'
-      cumulusTVFile.SetContentString(jsonContent) # Set content of the file from given string
+      cumulusTVFile = drive.CreateFile({'title': fileName, 'mimeType': gMimeType})  # Create GoogleDriveFile instance with title 'Hello.txt'
+      cumulusTVFile.SetContentString(gContent) # Set content of the file from given string
       cumulusTVFile.Upload()
       print "Uploaded to drive: " + fileName
     except Exception as e:
