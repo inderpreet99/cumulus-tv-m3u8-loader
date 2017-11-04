@@ -274,6 +274,7 @@ def process(m3u, provider, cumulustv, contStart=None):
 
         cumulusData = {
           "number": str(contStart),
+          "id": id,
           "name": name,
           "logo": logo,
           "url": url,
@@ -296,7 +297,7 @@ def process(m3u, provider, cumulustv, contStart=None):
 def write2File(fd, cumulustv):
   channels = cumulustv["channels"]
   channelDataMap = [
-    ("number", "tvg-id"),
+    ("id", "tvg-id"),
     ("name", "tvg-name"),
     ("logo", "tvg-logo"),
     ("genres", "group-title"),
