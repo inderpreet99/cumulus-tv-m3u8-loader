@@ -134,7 +134,6 @@ def filterByName(filterNames, name):
 def mapGenres(genre, provider):
   ret = ""
   if genre:
-    genre = genre.lower()
     genres = config.config["providers"][provider].get("genres-map", None)
     if genres:
       if genre in genres:
